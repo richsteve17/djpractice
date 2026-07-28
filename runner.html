@@ -766,7 +766,8 @@
       <div class="controls-grid">
         <button class="btn-nav-big" onclick="prevTransition()">◀ PREV</button>
         <button class="btn-nav-big" onclick="nextTransition()">NEXT ▶</button>
-        <button class="btn-nav-big btn-review-action btn-review-span" onclick="openCurrentReview()">📝 SCORE REVIEW</button>
+        <button class="btn-nav-big btn-review-action btn-review-span" onclick="openGlossary()">📖 TERM GLOSSARY</button>
+        <button class="btn-nav-big btn-review-action btn-review-span" style="grid-column: span 2; background: linear-gradient(135deg, #182038, #101628);" onclick="openCurrentReview()">📝 SCORE REVIEW</button>
       </div>
     </div>
 
@@ -821,6 +822,15 @@
     </div>
   </div>
 
+  <!-- GLOSSARY MODAL OVERLAY -->
+  <div class="countdown-overlay" id="glossary-overlay" style="display: none;">
+    <button class="btn-close-overlay" onclick="closeGlossary()">✕ CLOSE [ESC]</button>
+    <div class="countdown-title" style="font-size: clamp(1.2rem, 3vw, 2rem);">📖 DJ TERM GLOSSARY</div>
+    <div style="padding: 20px; max-width: 900px; width: 100%; overflow-y: auto; max-height: 70vh;" id="glossary-content">
+      <!-- Glossary entries injected here -->
+    </div>
+  </div>
+
   <script>
     /* ==========================================
        FEATURE 4: ZONE MOOD GROUPING EXACT CONTRACT
@@ -836,6 +846,182 @@
       3: "Zone 3 — Looping & Echo",
       4: "Zone 4 — Stinger & Quick Cut",
       5: "Zone 5 — Harmonic Release"
+    };
+
+    /* ==========================================
+       GLOSSARY DATA - EXPLANATIONS FOR BEGINNERS
+       Every term explained with Hercules/djay Pro instructions
+       ========================================== */
+    const GLOSSARY = {
+      // SETUP TERMS
+      "crossfader linear": {
+        meaning: "Set the crossfader to blend both songs evenly in the middle position",
+        howTo: "On Hercules: Move the horizontal fader at the bottom to the center. In djay Pro: Tap the 'XF' button and set curve to 'Linear' or 'Mix', then center the fader.",
+        why: "Linear mode gives equal volume to both decks when centered, perfect for smooth blends."
+      },
+      "crossfader fast": {
+        meaning: "Use a sharp crossfader curve for quick cuts between songs",
+        howTo: "On Hercules: Press the curve button near crossfader until LED shows fast curve. In djay Pro: Go to Settings > Controller > Crossfader Curve and select 'Cut' or 'Sharp'.",
+        why: "Fast curves switch from one song to another quickly, avoiding muddy overlaps during key changes."
+      },
+      "low-pass outgoing": {
+        meaning: "Filter out the high frequencies (treble) from the song you're mixing OUT of",
+        howTo: "On Hercules: Turn the filter knob on Deck A left (counter-clockwise). In djay Pro: Use the 'Filter' effect on the outgoing deck and drag down to cut highs.",
+        why: "Removing highs from the old track makes room for the new track's energy without clashing."
+      },
+      "heavy low-pass outgoing": {
+        meaning: "Aggressively filter out almost all high and mid frequencies from the outgoing song",
+        howTo: "On Hercules: Turn the filter knob fully left. In djay Pro: Set Low-Pass filter to 70-80% intensity on the outgoing deck.",
+        why: "When changing keys drastically, this hides the harmonic clash by making the old track sound muffled and distant."
+      },
+      "cue incoming downbeat": {
+        meaning: "Find and mark the first beat of a musical phrase in the incoming song",
+        howTo: "On Hercules: Load the track, press PLAY briefly to find the first strong beat, then press CUE to set that point. In djay Pro: Tap the waveform at the first downbeat, then tap the CUE button.",
+        why: "Starting on a downbeat keeps both songs rhythmically aligned."
+      },
+      "headphone cue incoming kick": {
+        meaning: "Listen to only the incoming song's kick drum in your headphones before mixing it live",
+        howTo: "On Hercules: Press the CUE button while wearing headphones, adjust Mix knob to hear only CUE channel. In djay Pro: Enable headphone monitoring, tap the CUE button on the deck, and solo the kick frequency range if needed.",
+        why: "You need to hear the kick clearly to match it with the outgoing track's kick."
+      },
+      "pitch both decks to [X] BPM": {
+        meaning: "Temporarily change the speed of both songs to meet in the middle",
+        howTo: "On Hercules: Use the pitch faders on both decks to reach the target BPM shown on screen. In djay Pro: Drag the BPM number up/down or use the pitch slider until both decks show the target BPM. Make sure SYNC is OFF.",
+        why: "When two songs have very different BPMs, meeting in the middle makes the transition smoother."
+      },
+      "key-lock ON": {
+        meaning: "Keep the song's pitch/key the same even when you change its speed",
+        howTo: "On Hercules: Press the KEY LOCK button (often labeled 'KEY' or has a lock icon). In djay Pro: Tap the KEY LOCK button above the waveform (looks like a padlock).",
+        why: "Without key-lock, speeding up or slowing down a track makes it sound chipmunk-fast or demon-slow. Key-lock preserves the original key."
+      },
+      "filter outgoing": {
+        meaning: "Apply a filter effect to gradually remove frequencies from the outgoing track",
+        howTo: "On Hercules: Turn the filter knob on the outgoing deck. In djay Pro: Add the Filter FX to the outgoing deck and slowly turn the dry/wet knob.",
+        why: "Filters create tension and make the outgoing track fade naturally instead of just lowering volume."
+      },
+      "4-bar loop outgoing": {
+        meaning: "Repeat a 4-beat section of the outgoing song to give yourself more time",
+        howTo: "On Hercules: Press IN at the start of a phrase, let it play 4 beats, press OUT. The loop will repeat. In djay Pro: Tap the LOOP button, select '4', then tap IN/OUT on the waveform.",
+        why: "Looping buys you time to prepare the incoming track without the outgoing track running out."
+      },
+      "echo ON": {
+        meaning: "Add a delay/repeat effect to smooth out the end of the outgoing track",
+        howTo: "On Hercules: Press the ECHO or DELAY FX button, adjust the mix knob. In djay Pro: Select Echo FX, set feedback to 40-60%, and increase dry/wet as you exit.",
+        why: "Echo tails cover up awkward cuts and make endings sound intentional."
+      },
+      "incoming cued at CUE1": {
+        meaning: "The first saved cue point in the incoming song is ready to go",
+        howTo: "On Hercules: Load track, find your starting point, hold SHIFT + press a pad to save as CUE1. In djay Pro: Navigate to the desired point, tap a hot cue slot (1-8) to save it.",
+        why: "Cue points let you jump instantly to the perfect starting position every time."
+      },
+      
+      // TRIGGER TERMS
+      "start incoming at first downbeat of outgoing phrase": {
+        meaning: "Begin the new song exactly when the current song starts a new musical section",
+        howTo: "Count the beats: 1-2-3-4, 2-2-3-4, 3-2-3-4, 4-2-3-4. On the next '1', start the incoming track. On Hercules/djay: Watch the beat grid and start when the outgoing track hits beat 1 of a new 8 or 16-bar section.",
+        why: "Phrases in electronic/post-hardcore music are usually 8, 16, or 32 bars. Matching phrases keeps the energy flowing naturally."
+      },
+      "hit incoming on phrase boundary": {
+        meaning: "Start the new song at the exact moment the old song completes a musical phrase",
+        howTo: "Listen for drum fills, guitar stops, or vocal endings—these signal a phrase ending. Start the incoming track on the very next beat 1.",
+        why: "Phrase boundaries are natural transition points. Missing them makes the mix feel rushed or dragging."
+      },
+      "incoming at CUE1 under outgoing loop": {
+        meaning: "Start the incoming song at your saved cue point while the outgoing song is looping",
+        howTo: "With the outgoing track looping, press the CUE1 button on the incoming deck right on a downbeat.",
+        why: "The loop gives you a stable background to layer the new track without timing pressure."
+      },
+      
+      // MOVE TERMS
+      "blend over 16 bars": {
+        meaning: "Gradually mix from one song to another over 16 beats (about 30-45 seconds)",
+        howTo: "Start both tracks playing together. Slowly move the crossfader or volume fader from old to new over 16 counts. On Hercules: Use the channel faders for smoother control. In djay Pro: Automate the crossfader or manually slide it gradually.",
+        why: "Long blends work well when songs have similar energy and BPM. Gives listeners time to adjust."
+      },
+      "roll highs outgoing around bar 12": {
+        meaning: "Around the 12th beat of your blend, start turning down the treble on the outgoing track",
+        howTo: "Count to 12 while blending. On Hercules: Turn the EQ HIGH knob left on the outgoing deck. In djay Pro: Drag the High EQ slider down on the outgoing track.",
+        why: "Removing highs from the old track near the end prevents frequency clash and signals the transition is ending."
+      },
+      "fast 4-bar cut": {
+        meaning: "Quickly switch from one song to another in just 4 beats (2-5 seconds)",
+        howTo: "On the downbeat, slam the crossfader to the new track in one motion. Or drop the volume on the old track while bringing up the new one rapidly.",
+        why: "Fast cuts are used when songs don't blend well harmonically. Better to rip the band-aid off quickly."
+      },
+      "do not long-blend the key jump": {
+        meaning: "Don't let both songs play together for long when they're in different musical keys",
+        howTo: "Keep the overlap under 4-8 bars max. Use filters or quick cuts instead of slow fades.",
+        why: "Clashing keys sound dissonant and unpleasant. Short overlaps minimize the clash."
+      },
+      "8-bar blend": {
+        meaning: "Mix the two songs together over 8 beats (about 15-25 seconds)",
+        howTo: "Similar to 16-bar blend but twice as fast. Start the crossfade and complete it within 8 counts.",
+        why: "Medium-length blends work for moderate BPM changes where you need some overlap but not too much."
+      },
+      "roll highs outgoing": {
+        meaning: "Turn down the high-frequency EQ on the outgoing track",
+        howTo: "On Hercules: Rotate the HIGH knob counter-clockwise on the outgoing channel. In djay Pro: Slide the High EQ fader down.",
+        why: "Highs carry most of the perceived 'clash' between tracks. Removing them smooths the transition."
+      },
+      "let incoming riff take over": {
+        meaning: "Allow the guitar riff or main melody of the new song to become the dominant sound",
+        howTo: "As you blend, listen for when the incoming track's main riff kicks in. Time your final crossfader movement to coincide with that moment.",
+        why: "Strong riffs signal energy shifts. Riding that wave makes the transition feel powerful."
+      },
+      "release loop with echo tail": {
+        meaning: "End the loop on the outgoing track while adding echo that fades out naturally",
+        howTo: "Turn off the loop, immediately engage echo FX, then fade out the track while the echo repeats decay.",
+        why: "This creates a smooth exit—the echo fills the space as the track disappears."
+      },
+      "blend over 16 bars": {
+        meaning: "Gradually transition over 16 beats",
+        howTo: "Slowly move crossfader/volume from old to new over 16 counts.",
+        why: "Gives time for large BPM or energy changes to feel natural."
+      },
+      
+      // BAIL OUT TERMS
+      "echo out outgoing if kick alignment drifts": {
+        meaning: "If the two songs' kick drums fall out of sync, use echo to smoothly exit the old track",
+        howTo: "Engage Echo FX on the outgoing deck, turn off its audio (not the echo), let the echoes fade while bringing in the new track fully.",
+        why: "Drifting kicks sound amateur. Echo masks the mistake and creates an intentional-sounding exit."
+      },
+      "cut earlier if harmonic clash is obvious": {
+        meaning: "If the two songs sound terrible together, don't wait—switch immediately",
+        howTo: "Don't finish your planned blend. Just cut the crossfader to the new track now.",
+        why: "A quick mistake is better than 16 bars of painful dissonance."
+      },
+      "echo out outgoing if keys fight": {
+        meaning: "When the musical keys clash badly, use echo to remove the outgoing track",
+        howTo: "Same as kick drift—engage echo, mute the dry signal, fade out.",
+        why: "Key clashes are the worst sounding error. Get out fast."
+      },
+      "freeze loop and echo out if messy": {
+        meaning: "If the transition is falling apart, lock the loop and use echo to bail",
+        howTo: "Re-engage the loop on the outgoing track to stabilize it, add echo, then fade out cleanly.",
+        why: "Freezing gives you control back. Echo covers the exit."
+      },
+      
+      // PASS CONDITION TERMS
+      "kick alignment holds for 16 bars": {
+        meaning: "Both songs' kick drums hit at exactly the same time for the entire 16-beat blend",
+        howToCheck: "Listen carefully—are the kicks hitting as one sound, or do you hear double-kicks? Use headphones to isolate and check.",
+        why: "Kick alignment is the foundation of good mixing. If kicks drift, the whole mix falls apart."
+      },
+      "key jump feels intentional, not accidental": {
+        meaning: "The change in musical key should sound like a deliberate artistic choice, not a mistake",
+        howToCheck: "Does the energy shift feel exciting or jarring? If it sounds wrong, you blended too long.",
+        why: "Some key jumps work for energy. The difference between 'bold' and 'bad' is timing and confidence."
+      },
+      "BPM jump feels controlled and phrase lands clean": {
+        meaning: "The tempo change should feel smooth, and the new song's first phrase should start perfectly on beat",
+        howToCheck: "Did you have to nudge the platter? Did the phrase start on 1 or did it feel off? Watch the beatgrid.",
+        why: "Large BPM changes require careful planning. A clean landing proves you matched phrases correctly."
+      },
+      "large BPM drop does not collapse": {
+        meaning: "When slowing down significantly, the energy should not feel like it's dying",
+        howToCheck: "Does the new track feel weak after the transition? You may need to use a stinger or cut faster.",
+        why: "Dropping from 195 to 170 BPM can kill momentum. Proper technique maintains energy."
+      }
     };
 
     const TRANSITIONS = [
@@ -1446,6 +1632,11 @@
           <div class="section-content" style="color: #7bfec0;">${t.pass}</div>
         </div>
 
+        <div style="background: rgba(0, 240, 255, 0.08); border: 1px dashed var(--accent-cyan); border-radius: 10px; padding: 12px; margin-top: 8px;">
+          <div style="font-size: 0.85rem; font-weight: 900; color: var(--accent-cyan); margin-bottom: 6px;">💡 DON'T KNOW A TERM?</div>
+          <div style="font-size: 0.9rem; color: var(--text-muted);">Tap the <strong>TERM GLOSSARY</strong> button below to see plain-English explanations with Hercules/djay Pro instructions.</div>
+        </div>
+
         ${t.timers.length > 0 ? `
           <div class="card-section">
             <div class="section-label">⏱️ BAR COUNTDOWN TIMERS</div>
@@ -1500,6 +1691,55 @@
         timerInterval = null;
       }
       document.getElementById('countdown-overlay').classList.remove('show');
+    }
+
+    /* ==========================================
+       GLOSSARY MODAL FUNCTIONS
+       ========================================== */
+    function openGlossary() {
+      const glossaryContent = document.getElementById('glossary-content');
+      let html = '<div style="display: grid; gap: 16px;">';
+      
+      // Group terms by category
+      const categories = {
+        'SETUP TERMS': [],
+        'TRIGGER TERMS': [],
+        'MOVE TERMS': [],
+        'BAIL OUT TERMS': [],
+        'PASS CONDITION TERMS': []
+      };
+      
+      for (const [term, data] of Object.entries(GLOSSARY)) {
+        // Find which category this term belongs to by checking the comment structure
+        // We'll use a simpler approach - just list all terms with their explanations
+      }
+      
+      // Render all glossary entries
+      for (const [term, data] of Object.entries(GLOSSARY)) {
+        const bgColor = data.howToCheck ? 'rgba(0, 255, 102, 0.1)' : 
+                        data.meaning.includes('echo') || data.meaning.includes('cut') || data.meaning.includes('bail') ? 'rgba(255, 0, 127, 0.1)' :
+                        'rgba(0, 240, 255, 0.08)';
+        const borderColor = data.howToCheck ? '#00ff66' : 
+                            data.meaning.includes('echo') || data.meaning.includes('cut') ? '#ff007f' : '#00f0ff';
+        
+        html += `
+          <div style="background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 12px; padding: 16px;">
+            <div style="font-size: 1.1rem; font-weight: 900; color: var(--accent-cyan); margin-bottom: 8px;">${term.toUpperCase()}</div>
+            <div style="font-size: 0.95rem; color: #fff; margin-bottom: 8px;"><strong>What it means:</strong> ${data.meaning}</div>
+            ${data.howTo ? `<div style="font-size: 0.95rem; color: var(--accent-yellow); margin-bottom: 8px;"><strong>How to do it:</strong> ${data.howTo}</div>` : ''}
+            ${data.howToCheck ? `<div style="font-size: 0.95rem; color: var(--accent-green); margin-bottom: 8px;"><strong>How to check:</strong> ${data.howToCheck}</div>` : ''}
+            <div style="font-size: 0.9rem; color: var(--text-muted);"><strong>Why:</strong> ${data.why}</div>
+          </div>
+        `;
+      }
+      
+      html += '</div>';
+      glossaryContent.innerHTML = html;
+      document.getElementById('glossary-overlay').style.display = 'flex';
+    }
+
+    function closeGlossary() {
+      document.getElementById('glossary-overlay').style.display = 'none';
     }
 
     function triggerBeepAlert() {
@@ -1682,6 +1922,7 @@
 
       if (e.key === 'Escape') {
         closeTimerOverlay();
+        closeGlossary();
       } else if (
         e.key === 'PageDown' || 
         e.key === 'ArrowRight' || 

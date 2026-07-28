@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>DJ PROMPTER // Monday Practice Set Runner</title>
+  
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg-main: #06050b;
+      --panel-bg: #0d0b18;
+      --card-bg: #131024;
+      --border-color: #272242;
+      --accent-cyan: #00f0ff;
+      --accent-magenta: #ff007f;
+      --accent-yellow: #ffe600;
+      --accent-green: #00ff66;
+      --text-bright: #ffffff;
+      --text-muted: #9ba1c0;
+      --risk-low-bg: #064e2e;
+      --risk-low-color: #7bfec0;
+      --risk-med-bg: #633b00;
+      --risk-med-color: #ffdf9e;
+      --risk-high-bg: #660019;
+      --risk-high-color: #ff9ebb;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-bright);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      transition: background-color 0.3s ease;
+    }
+
+    /* FEATURE 3: STINGER FLASH FULL SCREEN EFFECT */
+    body.stinger-active {
+      animation: pulseRedScreen 1.5s infinite ease-in-out;
+    }
+
+    @keyframes pulseRedScreen {
+      0%, 100% {
+        background-color: #06050b;
+        box-shadow: inset 0 0 50px rgba(255, 0, 127, 0.4);
+      }
+      50% {
+        background-color: #1a000d;
+        box-shadow: inset 0 0 120px rgba(255, 0, 127, 0.85);
+      }
+    }
+
+    /* Top Navigation Header */
+    header {
+      background: rgba(13, 11, 24, 0.95);
+      border-bottom: 1px solid var(--border-color);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 900;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+      color: var(--accent-cyan);
+    }
+
+    .footswitch-badge {
+      background: rgba(0, 240, 255, 0.12);
+      border: 1px solid var(--accent-cyan);
+      color: var(--accent-cyan);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 900;
+      display: none;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: #fff;
+    }
+
+    .tab-btn.active {
+      background: var(--accent-cyan);
+      color: #000;
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+    }
+
+    /* Layout Main Area */
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 1020px;
+      margin: 0 auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .screen {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* FEATURE 4: ZONE GROUPED SETLIST STYLES */
+    .zone-header h1 {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 900;
+      color: var(--text-bright);
+    }
+
+    .zone-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .zone-card:hover {
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 240, 255, 0.15);
+    }
+
+    .zone-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .zone-title {
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: var(--accent-cyan);
+    }
+
+    .zone-count {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--text-muted);
+    }
+
+    .zone-transitions-preview {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .preview-item {
+      background: rgba(0, 0, 0, 0.35);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-left: 4px solid var(--border-color);
+    }
+
+    .preview-item.high { border-left-color: var(--accent-magenta); }
+    .preview-item.medium { border-left-color: var(--accent-yellow); }
+    .preview-item.low { border-left-color: var(--accent-green); }
+
+    .problem-indicator {
+      background: #ff0055;
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    /* SCREEN 2: LIVE RUNNER STYLES */
+    .runner-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--panel-bg);
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    .runner-pos {
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: var(--accent-cyan);
+    }
+
+    .dots-bar {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .dot-node {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #252238;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dot-node.active {
+      background: var(--accent-cyan);
+      box-shadow: 0 0 10px var(--accent-cyan);
+      transform: scale(1.3);
+    }
+
+    .dot-node.problem {
+      background: #ff0055;
+      box-shadow: 0 0 8px #ff0055;
+    }
+
+    .runner-zone-name {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* CARD CONTAINER - HIGH CONTRAST & FULL FIT */
+    .card-container {
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+      position: relative;
+    }
+
+    .problem-banner {
+      background: rgba(255, 0, 85, 0.2);
+      border: 2px solid #ff0055;
+      color: #ff6699;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: 900;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .track-title {
+      font-size: clamp(1.4rem, 4.5vw, 2.5rem);
+      font-weight: 900;
+      line-height: 1.15;
+      color: var(--text-bright);
+      letter-spacing: -0.5px;
+    }
+
+    .track-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .key-bpm-badge {
+      font-family: monospace;
+      font-size: clamp(1.1rem, 3.2vw, 1.8rem);
+      font-weight: 900;
+      color: var(--accent-cyan);
+      background: rgba(0, 240, 255, 0.1);
+      padding: 4px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 240, 255, 0.3);
+    }
+
+    .risk-badge {
+      font-size: clamp(0.85rem, 2.5vw, 1.2rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 999px;
+      letter-spacing: 1px;
+    }
+
+    .risk-badge.low { background: var(--risk-low-bg); color: var(--risk-low-color); }
+    .risk-badge.medium { background: var(--risk-med-bg); color: var(--risk-med-color); }
+    .risk-badge.high { background: var(--risk-high-bg); color: var(--risk-high-color); }
+
+    /* FEATURE 3: STINGER BOX */
+    .stinger-box {
+      background: rgba(255, 0, 127, 0.25);
+      border: 3px solid var(--accent-magenta);
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: clamp(1.2rem, 3.8vw, 1.8rem);
+      font-weight: 900;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 0 30px rgba(255, 0, 127, 0.5);
+      animation: pulseStingerBox 1.2s infinite ease-in-out;
+    }
+
+    @keyframes pulseStingerBox {
+      0%, 100% { transform: scale(1); border-color: var(--accent-magenta); }
+      50% { transform: scale(1.02); border-color: #ffffff; box-shadow: 0 0 45px rgba(255, 0, 127, 0.9); }
+    }
+
+    .card-section {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .section-label {
+      font-size: 0.8rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+    }
+
+    .section-content {
+      font-size: clamp(1.05rem, 3.2vw, 1.5rem);
+      font-weight: 700;
+      line-height: 1.25;
+      color: #eaeaea;
+    }
+
+    .section-bullets {
+      list-style-type: disc;
+      padding-left: 22px;
+    }
+
+    .section-bullets li {
+      font-size: clamp(1.05rem, 3.2vw, 1.5rem);
+      font-weight: 700;
+      line-height: 1.25;
+      margin: 3px 0;
+    }
+
+    /* FEATURE 2: DRILL MODE CONTROLS */
+    .drill-bar {
+      background: rgba(255, 230, 0, 0.1);
+      border: 1px solid var(--accent-yellow);
+      padding: 12px 16px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .drill-status {
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: var(--accent-yellow);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-drill-action {
+      background: var(--accent-yellow);
+      color: #000;
+      border: none;
+      padding: 8px 14px;
+      font-weight: 900;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-drill-action:active {
+      transform: scale(0.96);
+    }
+
+    .btn-problem-toggle {
+      background: rgba(255, 0, 85, 0.2);
+      border: 1px solid #ff0055;
+      color: #ff6699;
+      padding: 8px 14px;
+      font-weight: 900;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-problem-toggle.active {
+      background: #ff0055;
+      color: #fff;
+    }
+
+    /* TIMER & ACTION BUTTONS */
+    .timer-buttons-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+
+    .btn-timer {
+      flex: 1;
+      min-width: 140px;
+      min-height: 56px;
+      background: linear-gradient(135deg, #182038, #101628);
+      border: 2px solid var(--accent-cyan);
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 900;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-timer:active {
+      transform: scale(0.97);
+      background: var(--accent-cyan);
+      color: #000;
+    }
+
+    /* CONTROLS BAR (PREV, NEXT, REVIEW, ETC) */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 600px) {
+      .controls-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .btn-review-span {
+        grid-column: span 2;
+      }
+    }
+
+    .btn-nav-big {
+      min-height: 64px;
+      background: var(--panel-bg);
+      border: 2px solid var(--border-color);
+      color: var(--text-bright);
+      font-size: 1.3rem;
+      font-weight: 900;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-nav-big:hover {
+      border-color: var(--accent-cyan);
+      background: #18142e;
+    }
+
+    .btn-nav-big:active {
+      transform: scale(0.97);
+      background: var(--accent-cyan);
+      color: #000;
+    }
+
+    .btn-review-action {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+      color: #fff;
+      border: none;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+    }
+
+    /* COUNTDOWN OVERLAY */
+    .countdown-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 3, 10, 0.95);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      backdrop-filter: blur(12px);
+    }
+
+    .countdown-overlay.show {
+      display: flex;
+    }
+
+    .countdown-title {
+      font-size: clamp(1.4rem, 4vw, 2.5rem);
+      font-weight: 900;
+      color: var(--text-bright);
+      text-align: center;
+      padding: 0 20px;
+    }
+
+    .countdown-number {
+      font-size: clamp(100px, 30vw, 280px);
+      font-weight: 900;
+      color: var(--accent-cyan);
+      line-height: 1;
+      text-shadow: 0 0 50px rgba(0, 240, 255, 0.6);
+    }
+
+    .countdown-progress-track {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 16px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .countdown-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+      box-shadow: 0 0 15px var(--accent-cyan);
+      transition: width 0.05s linear;
+    }
+
+    .btn-close-overlay {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 10px 20px;
+      font-size: 1rem;
+      font-weight: 800;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    /* SCREEN 3: REVIEW SCREEN & EXPORT STYLES */
+    .review-header {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .review-card-title {
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: var(--accent-cyan);
+    }
+
+    .score-criteria-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+
+    .criteria-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .criteria-label {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text-bright);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .score-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .btn-score {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      padding: 8px;
+      font-size: 1rem;
+      font-weight: 900;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-score.selected {
+      background: var(--accent-cyan);
+      color: #000;
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+    }
+
+    .notes-textarea {
+      width: 100%;
+      height: 100px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 1rem;
+      outline: none;
+      resize: vertical;
+    }
+
+    .notes-textarea:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    .summary-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* JSON EXPORT MODAL & DISPLAY */
+    .json-preview-box {
+      width: 100%;
+      height: 180px;
+      background: #04030a;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 12px;
+      color: var(--accent-green);
+      font-family: monospace;
+      font-size: 0.85rem;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP HEADER TABS -->
+  <header>
+    <div class="brand">
+      <span>🎧 DJ PROMPTER</span>
+      <div id="footswitch-badge" class="footswitch-badge" style="display: none;" title="Bluetooth Page Turner pedal active (PageUp/PageDown/Arrows)">
+        🦶 FOOT SWITCH READY
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button id="btn-connect-bt" class="tab-btn" style="border: 1px solid var(--accent-cyan); color: var(--accent-cyan);" onclick="connectBluetoothPedal()" title="Pair a Bluetooth LE / Web Bluetooth pedal">
+        📡 Connect Bluetooth
+      </button>
+      <nav class="nav-tabs">
+        <button class="tab-btn active" onclick="switchScreen('runner')">⚡ Live Runner</button>
+        <button class="tab-btn" onclick="switchScreen('zones')">🗺️ Setlist & Zones</button>
+        <button class="tab-btn" onclick="switchScreen('review')">📝 Set Review</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- SCREEN 1: SETLIST & ZONES -->
+    <div id="screen-zones" class="screen">
+      <div class="zone-header">
+        <h1>Practice Setlist (Grouped by Zone)</h1>
+        <p>Overview of the 5 practice zones and transition set sequences.</p>
+      </div>
+      <div id="zones-list" style="display: flex; flex-direction: column; gap: 14px;"></div>
+    </div>
+
+    <!-- SCREEN 2: LIVE RUNNER -->
+    <div id="screen-runner" class="screen active">
+      <div class="runner-header">
+        <div class="runner-pos" id="runner-pos">1/13</div>
+        <div class="dots-bar" id="runner-dots"></div>
+        <div class="runner-zone-name" id="runner-zone-name">Zone 1</div>
+      </div>
+
+      <!-- MAIN HIGH CONTRAST TRANSITION CARD -->
+      <div class="card-container" id="card-container">
+        <!-- Filled dynamically -->
+      </div>
+
+      <!-- BIG NAVIGATION & ACTION CONTROLS -->
+      <div class="controls-grid">
+        <button class="btn-nav-big" onclick="prevTransition()">◀ PREV</button>
+        <button class="btn-nav-big" onclick="nextTransition()">NEXT ▶</button>
+        <button class="btn-nav-big btn-review-action btn-review-span" onclick="openCurrentReview()">📝 SCORE REVIEW</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 3: REVIEW & EXPORT SCREEN -->
+    <div id="screen-review" class="screen">
+      <div class="review-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: var(--text-muted); font-size: 0.9rem; font-weight: 800;">EVALUATE TRANSITION</span>
+          <span id="review-trans-id" style="color: var(--accent-cyan); font-weight: 900;">01→02</span>
+        </div>
+        <div class="review-card-title" id="review-trans-title">Saosin → A Day to Remember</div>
+      </div>
+
+      <div class="score-criteria-grid" id="criteria-grid">
+        <!-- Score buttons generated dynamically -->
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <label style="font-size: 0.9rem; font-weight: 900; color: var(--text-muted); text-transform: uppercase;">Performance Notes</label>
+        <textarea id="review-notes" class="notes-textarea" placeholder="Record cue timing notes, unexpected drift, key clashes, or hardware adjustments..."></textarea>
+      </div>
+
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <button class="btn-nav-big btn-review-action" style="flex: 1; min-width: 180px;" onclick="saveReviewData()">💾 SAVE EVALUATION</button>
+        <button class="btn-nav-big" style="flex: 1; min-width: 180px; border-color: var(--accent-green); color: var(--accent-green);" onclick="exportReviewJson()">📥 EXPORT JSON</button>
+      </div>
+
+      <!-- JSON Export Preview & Clipboard -->
+      <div class="summary-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="font-size: 1.1rem; font-weight: 900; color: var(--text-bright);">📋 Evaluation Export JSON</div>
+          <button class="btn-drill-action" onclick="copyJsonToClipboard()">Copy JSON</button>
+        </div>
+        <pre id="json-export-preview" class="json-preview-box"></pre>
+      </div>
+
+      <!-- Overall Performance Log -->
+      <div class="summary-card">
+        <div style="font-size: 1.1rem; font-weight: 900; color: var(--text-bright);">📊 Set Performance Summary</div>
+        <div id="set-summary-content" style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.5;"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- TIMER COUNTDOWN OVERLAY -->
+  <div class="countdown-overlay" id="countdown-overlay">
+    <button class="btn-close-overlay" onclick="closeTimerOverlay()">✕ CLOSE [ESC]</button>
+    <div class="countdown-title" id="countdown-title">Blend · 16 bars @ 180 BPM</div>
+    <div class="countdown-number" id="countdown-number">16</div>
+    <div class="countdown-progress-track">
+      <div class="countdown-progress-bar" id="countdown-progress-bar"></div>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================
+       FEATURE 4: ZONE MOOD GROUPING EXACT CONTRACT
+       Zone 1: 01→02, 02→03
+       Zone 2: 03→04, 04→05, 05→06
+       Zone 3: 06→07, 07→08
+       Zone 4: 08→09, 09→10, 10→11
+       Zone 5: 11→12, 12→13, 13→14
+       ========================================== */
+    const ZONES_META = {
+      1: "Zone 1 — Phrasing & Kick Matching",
+      2: "Zone 2 — Harmonic Stress Test",
+      3: "Zone 3 — Looping & Echo",
+      4: "Zone 4 — Stinger & Quick Cut",
+      5: "Zone 5 — Harmonic Release"
+    };
+
+    const TRANSITIONS = [
+      {
+        id: "01→02",
+        zone: 1,
+        from: "Saosin — Voices",
+        to: "A Day to Remember — The Downfall of Us All",
+        keys: "6B/172 → 4A/180",
+        risk: "medium",
+        setup: [
+          "Crossfader linear",
+          "Low-pass outgoing",
+          "Cue incoming downbeat",
+          "Headphone cue incoming kick"
+        ],
+        trigger: "Start incoming at first downbeat of outgoing phrase.",
+        move: [
+          "Blend over 16 bars",
+          "Roll highs outgoing around bar 12"
+        ],
+        bail: "Echo out outgoing if kick alignment drifts.",
+        pass: "Kick alignment holds for 16 bars.",
+        stinger: null,
+        timers: [
+          { label: "Blend", bars: 16, bpm: 180 }
+        ]
+      },
+      {
+        id: "02→03",
+        zone: 1,
+        from: "A Day to Remember — The Downfall of Us All",
+        to: "Silverstein — Smile in Your Sleep",
+        keys: "4A/180 → 9A/180",
+        risk: "high",
+        setup: [
+          "Crossfader fast",
+          "Heavy low-pass outgoing",
+          "Incoming cued at CUE1"
+        ],
+        trigger: "Hit incoming on phrase boundary.",
+        move: [
+          "Fast 4-bar cut",
+          "Do not long-blend the key jump"
+        ],
+        bail: "Cut earlier if harmonic clash is obvious.",
+        pass: "Key jump feels intentional, not accidental.",
+        stinger: null,
+        timers: [
+          { label: "Cut", bars: 4, bpm: 180 }
+        ]
+      },
+      {
+        id: "03→04",
+        zone: 2,
+        from: "Silverstein — Smile in Your Sleep",
+        to: "Senses Fail — Buried a Lie",
+        keys: "9A/180 → 1A/195",
+        risk: "high",
+        setup: [
+          "Crossfader linear",
+          "Pitch both decks to 187 BPM",
+          "Key-lock ON",
+          "Filter outgoing"
+        ],
+        trigger: "Incoming at CUE1.",
+        move: [
+          "8-bar blend",
+          "Roll highs outgoing",
+          "Let incoming riff take over"
+        ],
+        bail: "Echo out outgoing if keys fight.",
+        pass: "BPM jump feels controlled and phrase lands clean.",
+        stinger: null,
+        timers: [
+          { label: "Blend", bars: 8, bpm: 187 }
+        ]
+      },
+      {
+        id: "04→05",
+        zone: 2,
+        from: "Senses Fail — Buried a Lie",
+        to: "From First to Last — Note to Self",
+        keys: "1A/195 → 3A/170",
+        risk: "high",
+        setup: [
+          "4-bar loop outgoing",
+          "Echo ON",
+          "Pitch both decks to 182 BPM",
+          "Key-lock ON"
+        ],
+        trigger: "Incoming at CUE1 under outgoing loop.",
+        move: [
+          "Release loop with echo tail",
+          "Blend over 16 bars"
+        ],
+        bail: "Freeze loop and echo out if messy.",
+        pass: "Large BPM drop does not collapse.",
+        stinger: null,
+        timers: [
+          { label: "Blend", bars: 16, bpm: 182 }
+        ]
+      },
+      {
+        id: "05→06",
+        zone: 2,
+        from: "From First to Last — Note to Self",
+        to: "Emery — Walls",
+        keys: "3A/170 → 2A/165",
+        risk: "low",
+        setup: [
+          "Crossfader linear",
+          "Swap mids carefully",
+          "Incoming cued at CUE1"
+        ],
+        trigger: "Incoming at phrase start.",
+        move: [
+          "Smooth 16-bar blend",
+          "This is the recovery transition"
+        ],
+        bail: "Low-pass outgoing if mids crowd.",
+        pass: "Energy settles without killing momentum.",
+        stinger: null,
+        timers: [
+          { label: "Blend", bars: 16, bpm: 165 }
+        ]
+      },
+      {
+        id: "06→07",
+        zone: 3,
+        from: "Emery — Walls",
+        to: "Funeral for a Friend — Roses for the Dead",
+        keys: "2A/165 → 5A/182",
+        risk: "high",
+        setup: [
+          "Crossfader fast",
+          "Pitch both decks to 173 BPM",
+          "Filter sweep outgoing"
+        ],
+        trigger: "Incoming at CUE1.",
+        move: [
+          "Prep over 8 bars",
+          "Execute crossfader over final 4 bars"
+        ],
+        bail: "Echo out if key clash appears.",
+        pass: "+17 BPM jump does not sound rushed.",
+        stinger: null,
+        timers: [
+          { label: "Prep", bars: 8, bpm: 173 },
+          { label: "Cut", bars: 4, bpm: 173 }
+        ]
+      },
+      {
+        id: "07→08",
+        zone: 3,
+        from: "Funeral for a Friend — Roses for the Dead",
+        to: "Bayside — Devotion and Desire",
+        keys: "5A/182 → 7B/150",
+        risk: "medium",
+        setup: [
+          "Reverb 100% wet outgoing",
+          "Crossfader linear",
+          "Key-lock ON"
+        ],
+        trigger: "Incoming at CUE1 under reverb tail.",
+        move: [
+          "16-bar decay",
+          "Let minor-to-major shift happen through reverb tail"
+        ],
+        bail: "Hard cut if low end gets muddy.",
+        pass: "Energy drop feels emotional, not dead.",
+        stinger: null,
+        timers: [
+          { label: "Decay", bars: 16, bpm: 150 }
+        ]
+      },
+      {
+        id: "08→09",
+        zone: 4,
+        from: "Bayside — Devotion and Desire",
+        to: "The Early November — Ever So Sweet",
+        keys: "7B/150 → 9B/145",
+        risk: "medium",
+        setup: [
+          "Crossfader fast / slam",
+          "Bret Hart stinger on PAD 1",
+          "Incoming cued at CUE1"
+        ],
+        trigger: "Trigger stinger on incoming downbeat.",
+        move: [
+          "Hard cut",
+          "No long blend"
+        ],
+        bail: "Cut before phrase if stinger timing is late.",
+        pass: "Stinger masks the transition completely.",
+        stinger: "PAD 1 — BRET HART GLASS SHATTER",
+        timers: [
+          { label: "Slam", bars: 1, bpm: 145 }
+        ]
+      },
+      {
+        id: "09→10",
+        zone: 4,
+        from: "The Early November — Ever So Sweet",
+        to: "Underoath — Writing on the Walls",
+        keys: "9B/145 → 12A/160",
+        risk: "high",
+        setup: [
+          "Crossfader fast",
+          "Low-pass incoming intro",
+          "Incoming cued at CUE1"
+        ],
+        trigger: "Incoming at atmospheric entry point.",
+        move: [
+          "4-bar blend",
+          "Bring in Underoath carefully"
+        ],
+        bail: "Echo out if key feels wrong.",
+        pass: "Mood shift feels like a darker turn.",
+        stinger: null,
+        timers: [
+          { label: "Blend", bars: 4, bpm: 160 }
+        ]
+      },
+      {
+        id: "10→11",
+        zone: 4,
+        from: "Underoath — Writing on the Walls",
+        to: "Story of the Year — Until the Day I Die",
+        keys: "12A/160 → 10B/190",
+        risk: "high",
+        setup: [
+          "Crossfader fast / slam",
+          "Stone Cold stinger on PAD 2",
+          "Incoming cued at CUE1"
+        ],
+        trigger: "Trigger stinger at breakdown / downbeat.",
+        move: [
+          "Slam cut",
+          "Do not make this pretty"
+        ],
+        bail: "Cut immediately if stinger misses.",
+        pass: "Energy spike lands like a weapon.",
+        stinger: "PAD 2 — STONE COLD GLASS BREAK",
+        timers: [
+          { label: "Slam", bars: 1, bpm: 175 }
+        ]
+      },
+      {
+        id: "11→12",
+        zone: 5,
+        from: "Story of the Year — Until the Day I Die",
+        to: "Armor for Sleep — Remember to Feel Real",
+        keys: "10B/190 → 1B/145",
+        risk: "high",
+        setup: [
+          "Echo freeze",
+          "1-bar loop outgoing",
+          "Reverb 100% wet",
+          "Crossfader linear"
+        ],
+        trigger: "Incoming under reverb / echo tail.",
+        move: [
+          "16-bar fade",
+          "Let energy descend slowly"
+        ],
+        bail: "Hard cut if tail turns to noise.",
+        pass: "190 to 145 descent feels intentional.",
+        stinger: null,
+        timers: [
+          { label: "Fade", bars: 16, bpm: 145 }
+        ]
+      },
+      {
+        id: "12→13",
+        zone: 5,
+        from: "Armor for Sleep — Remember to Feel Real",
+        to: "Norma Jean — Memphis Will Be Laid to Waste",
+        keys: "1B/145 → 2A/165",
+        risk: "medium",
+        setup: [
+          "Crossfader fast",
+          "Filter incoming riff in",
+          "Incoming cued at CUE1"
+        ],
+        trigger: "Hit incoming at riff entry.",
+        move: [
+          "2-bar cut",
+          "Hard entry"
+        ],
+        bail: "Slam cut if timing is off.",
+        pass: "Chaos enters cleanly.",
+        stinger: null,
+        timers: [
+          { label: "Cut", bars: 2, bpm: 165 }
+        ]
+      },
+      {
+        id: "13→14",
+        zone: 5,
+        from: "Norma Jean — Memphis Will Be Laid to Waste",
+        to: "Further Seems Forever — The Moon Is Down",
+        keys: "2A/165 → 7B/120",
+        risk: "high",
+        setup: [
+          "The Rock stinger on PAD 3",
+          "Reverb 100% wet outgoing",
+          "Crossfader linear",
+          "Key-lock ON"
+        ],
+        trigger: "Trigger stinger on downbeat.",
+        move: [
+          "32-bar fade",
+          "Gradually bring tempo down to 120",
+          "Close with reverb decay"
+        ],
+        bail: "Echo freeze and cut if descent drags.",
+        pass: "Set ends like a main-event fade, not a crash.",
+        stinger: "PAD 3 — THE ROCK FINALLY HORN",
+        timers: [
+          { label: "Fade", bars: 32, bpm: 120 }
+        ]
+      }
+    ];
+
+    /* ==========================================
+       APPLICATION STATE & PERSISTENCE
+       ========================================== */
+    let currentIndex = 0;
+
+    try {
+      const savedIndex = parseInt(localStorage.getItem('dj_prompter_index') || '0', 10);
+      if (!isNaN(savedIndex) && savedIndex >= 0 && savedIndex < TRANSITIONS.length) {
+        currentIndex = savedIndex;
+      }
+    } catch (e) {}
+
+    // Problem transitions state
+    let problemTransitions = {};
+    try {
+      problemTransitions = JSON.parse(localStorage.getItem('dj_prompter_problems') || '{}');
+    } catch (e) {
+      problemTransitions = {};
+    }
+
+    // Reviews state
+    let reviewsData = {};
+    try {
+      reviewsData = JSON.parse(localStorage.getItem('dj_prompter_reviews') || '{}');
+    } catch (e) {
+      reviewsData = {};
+    }
+
+    // Drill Mode state
+    let isDrillActive = false;
+    let drillInterval = null;
+    let drillSecondsRemaining = 30;
+
+    const REVIEW_CRITERIA = [
+      { key: 'cue', label: 'Cue Accuracy' },
+      { key: 'beat', label: 'Beat Alignment' },
+      { key: 'harmonic', label: 'Harmonic Cleanliness' },
+      { key: 'fx', label: 'FX Timing' },
+      { key: 'fader', label: 'Crossfader Timing' },
+      { key: 'energy', label: 'Energy Continuity' }
+    ];
+
+    /* ==========================================
+       NAVIGATION & SCREEN SWITCHING
+       ========================================== */
+    function switchScreen(screenId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+
+      const targetTab = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(screenId));
+      if (targetTab) targetTab.classList.add('active');
+
+      const targetScreen = document.getElementById('screen-' + screenId);
+      if (targetScreen) targetScreen.classList.add('active');
+
+      if (screenId === 'zones') renderZoneScreen();
+      if (screenId === 'runner') renderRunnerCard();
+      if (screenId === 'review') renderReviewScreen();
+    }
+
+    function setCurrentIndex(idx) {
+      if (idx < 0) idx = 0;
+      if (idx >= TRANSITIONS.length) idx = TRANSITIONS.length - 1;
+      currentIndex = idx;
+      stopDrillMode();
+      try {
+        localStorage.setItem('dj_prompter_index', currentIndex.toString());
+      } catch (e) {}
+      renderRunnerCard();
+    }
+
+    function nextTransition() {
+      setCurrentIndex(currentIndex + 1);
+    }
+
+    function prevTransition() {
+      setCurrentIndex(currentIndex - 1);
+    }
+
+    /* ==========================================
+       FEATURE 2: DRILL MODE LOGIC
+       ========================================== */
+    function toggleDrillMode(sec = 30) {
+      if (isDrillActive) {
+        stopDrillMode();
+      } else {
+        isDrillActive = true;
+        drillSecondsRemaining = sec;
+        runDrillTimer();
+      }
+      renderRunnerCard();
+    }
+
+    function resetDrillMode() {
+      drillSecondsRemaining = 30;
+      if (!isDrillActive) {
+        isDrillActive = true;
+        runDrillTimer();
+      }
+      renderRunnerCard();
+    }
+
+    function stopDrillMode() {
+      isDrillActive = false;
+      if (drillInterval) {
+        clearInterval(drillInterval);
+        drillInterval = null;
+      }
+    }
+
+    function runDrillTimer() {
+      if (drillInterval) clearInterval(drillInterval);
+      drillInterval = setInterval(() => {
+        drillSecondsRemaining--;
+        if (drillSecondsRemaining <= 0) {
+          triggerBeepAlert();
+          drillSecondsRemaining = 30; // Reset drill loop for continuous re-practice
+        }
+        const statusEl = document.getElementById('drill-status-text');
+        if (statusEl) statusEl.innerText = `DRILL ACTIVE: Repeating in ${drillSecondsRemaining}s`;
+      }, 1000);
+    }
+
+    function toggleProblemTransition(transId) {
+      problemTransitions[transId] = !problemTransitions[transId];
+      try {
+        localStorage.setItem('dj_prompter_problems', JSON.stringify(problemTransitions));
+      } catch (e) {}
+      renderRunnerCard();
+    }
+
+    /* ==========================================
+       RENDER SCREEN 1: SETLIST (GROUPED BY ZONE)
+       ========================================== */
+    function renderZoneScreen() {
+      const container = document.getElementById('zones-list');
+      container.innerHTML = '';
+
+      const zones = [1, 2, 3, 4, 5];
+      zones.forEach(zoneNum => {
+        const zoneTrans = TRANSITIONS.filter(t => t.zone === zoneNum);
+        const card = document.createElement('div');
+        card.className = 'zone-card';
+
+        const previews = zoneTrans.map(t => {
+          const isProb = problemTransitions[t.id];
+          return `
+            <div class="preview-item ${t.risk}">
+              <span>
+                <strong>${t.id}</strong>: ${t.from} → ${t.to}
+                ${isProb ? `<span class="problem-indicator">⚠️ PROBLEM</span>` : ''}
+              </span>
+              <span style="font-family: monospace; font-size: 0.85rem; color: var(--accent-cyan);">${t.keys}</span>
+            </div>
+          `;
+        }).join('');
+
+        card.innerHTML = `
+          <div class="zone-title-row">
+            <div class="zone-title">${ZONES_META[zoneNum]}</div>
+            <div class="zone-count">${zoneTrans.length} Transitions</div>
+          </div>
+          <div class="zone-transitions-preview">
+            ${previews}
+          </div>
+        `;
+
+        card.onclick = () => {
+          const firstTransIndex = TRANSITIONS.findIndex(t => t.zone === zoneNum);
+          if (firstTransIndex !== -1) {
+            setCurrentIndex(firstTransIndex);
+            switchScreen('runner');
+          }
+        };
+
+        container.appendChild(card);
+      });
+    }
+
+    /* ==========================================
+       RENDER SCREEN 2: LIVE RUNNER CARD
+       ========================================== */
+    function renderRunnerCard() {
+      const t = TRANSITIONS[currentIndex];
+      const isProblem = !!problemTransitions[t.id];
+
+      // FEATURE 3: STINGER FLASH TRIGGER
+      if (t.stinger !== null) {
+        document.body.classList.add('stinger-active');
+      } else {
+        document.body.classList.remove('stinger-active');
+      }
+
+      // Update header indicators
+      document.getElementById('runner-pos').innerText = `${currentIndex + 1}/${TRANSITIONS.length}`;
+      document.getElementById('runner-zone-name').innerText = ZONES_META[t.zone];
+
+      const dotsContainer = document.getElementById('runner-dots');
+      dotsContainer.innerHTML = TRANSITIONS.map((tr, i) => `
+        <div class="dot-node ${i === currentIndex ? 'active' : ''} ${problemTransitions[tr.id] ? 'problem' : ''}" onclick="setCurrentIndex(${i})"></div>
+      `).join('');
+
+      // Build card content
+      const setupList = t.setup.map(s => `<li>${s}</li>`).join('');
+      const moveList = t.move.map(m => `<li>${m}</li>`).join('');
+
+      // Timer buttons calculation (formula: seconds = bars * 4 * 60 / bpm)
+      const timerBtnsHtml = t.timers.map((timer) => {
+        const secs = (timer.bars * 4 * 60) / timer.bpm;
+        return `
+          <button class="btn-timer" onclick="startTimer('${timer.label}', ${timer.bars}, ${timer.bpm})">
+            ⏱️ ${timer.label.toUpperCase()} (${timer.bars}B @ ${timer.bpm}BPM) • ${secs.toFixed(1)}s
+          </button>
+        `;
+      }).join('');
+
+      const cardContainer = document.getElementById('card-container');
+      cardContainer.innerHTML = `
+        ${isProblem ? `
+          <div class="problem-banner">
+            <span>⚠️ FLAGGED PROBLEM TRANSITION — FOCUS ON PRECISION</span>
+            <span style="font-size: 0.8rem; font-family: monospace;">DRILL REQUIRED</span>
+          </div>
+        ` : ''}
+
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div class="track-title">${t.from}</div>
+          <div style="font-size: 1.4rem; color: var(--accent-magenta); font-weight: 900;">➔ ${t.to}</div>
+        </div>
+
+        <div class="track-meta-row">
+          <div class="key-bpm-badge">🔑 ${t.keys}</div>
+          <div class="risk-badge ${t.risk}">${t.risk} RISK</div>
+        </div>
+
+        <!-- FEATURE 3: STINGER SAMPLE PAD FLASH ALERT -->
+        ${t.stinger ? `
+          <div class="stinger-box">
+            🚨 STINGER ARMED: ${t.stinger}
+          </div>
+        ` : ''}
+
+        <!-- FEATURE 2: DRILL MODE WORKBENCH -->
+        <div class="drill-bar">
+          <div class="drill-status" id="drill-status-text">
+            ${isDrillActive ? `🎯 DRILL ACTIVE: Repeating in ${drillSecondsRemaining}s` : `🎯 Drill Mode (Auto-repeat practice loop)`}
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-drill-action" onclick="toggleDrillMode(30)">
+              ${isDrillActive ? 'STOP DRILL' : 'START DRILL (30s)'}
+            </button>
+            <button class="btn-drill-action" style="background: rgba(255,255,255,0.1); color: #fff;" onclick="resetDrillMode()">
+              RESET DRILL
+            </button>
+            <button class="btn-problem-toggle ${isProblem ? 'active' : ''}" onclick="toggleProblemTransition('${t.id}')">
+              ${isProblem ? '⚠️ PROBLEM MARKED' : 'MARK AS PROBLEM'}
+            </button>
+          </div>
+        </div>
+
+        <div class="card-section">
+          <div class="section-label">📋 SETUP</div>
+          <ul class="section-bullets">${setupList}</ul>
+        </div>
+
+        <div class="card-section">
+          <div class="section-label">🎯 TRIGGER</div>
+          <div class="section-content">${t.trigger}</div>
+        </div>
+
+        <div class="card-section">
+          <div class="section-label">🎛️ MOVE</div>
+          <ul class="section-bullets">${moveList}</ul>
+        </div>
+
+        <div class="card-section">
+          <div class="section-label">🚨 BAIL OUT</div>
+          <div class="section-content" style="color: #ff9999;">${t.bail}</div>
+        </div>
+
+        <div class="card-section">
+          <div class="section-label">✅ PASS CONDITION</div>
+          <div class="section-content" style="color: #7bfec0;">${t.pass}</div>
+        </div>
+
+        ${t.timers.length > 0 ? `
+          <div class="card-section">
+            <div class="section-label">⏱️ BAR COUNTDOWN TIMERS</div>
+            <div class="timer-buttons-row">${timerBtnsHtml}</div>
+          </div>
+        ` : ''}
+      `;
+    }
+
+    /* ==========================================
+       TIMER COUNTDOWN OVERLAY ENGINE
+       ========================================== */
+    let timerInterval = null;
+    let audioCtx = null;
+
+    function startTimer(label, bars, bpm) {
+      closeTimerOverlay();
+
+      const seconds = (bars * 4 * 60) / bpm;
+      const overlay = document.getElementById('countdown-overlay');
+      const titleEl = document.getElementById('countdown-title');
+      const numEl = document.getElementById('countdown-number');
+      const barEl = document.getElementById('countdown-progress-bar');
+
+      titleEl.innerText = `${label} · ${bars} bars @ ${bpm} BPM`;
+      numEl.innerText = Math.ceil(seconds);
+      barEl.style.width = '0%';
+      overlay.classList.add('show');
+
+      const startTime = performance.now();
+      const endTime = startTime + (seconds * 1000);
+
+      timerInterval = setInterval(() => {
+        const now = performance.now();
+        const remainMs = Math.max(0, endTime - now);
+        const remainSec = remainMs / 1000;
+        
+        numEl.innerText = Math.ceil(remainSec);
+        const percent = ((seconds * 1000 - remainMs) / (seconds * 1000)) * 100;
+        barEl.style.width = `${percent}%`;
+
+        if (remainMs <= 0) {
+          closeTimerOverlay();
+          triggerBeepAlert();
+        }
+      }, 40);
+    }
+
+    function closeTimerOverlay() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      document.getElementById('countdown-overlay').classList.remove('show');
+    }
+
+    function triggerBeepAlert() {
+      try {
+        if (!audioCtx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          audioCtx = new AudioContext();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+      } catch (e) {}
+    }
+
+    /* ==========================================
+       RENDER SCREEN 3: SCORE & EXPORT
+       ========================================== */
+    function openCurrentReview() {
+      switchScreen('review');
+    }
+
+    function renderReviewScreen() {
+      const t = TRANSITIONS[currentIndex];
+      document.getElementById('review-trans-id').innerText = t.id;
+      document.getElementById('review-trans-title').innerText = `${t.from} → ${t.to}`;
+
+      const tReview = reviewsData[t.id] || { scores: {}, notes: '' };
+
+      const grid = document.getElementById('criteria-grid');
+      grid.innerHTML = REVIEW_CRITERIA.map(c => {
+        const currentScore = tReview.scores[c.key] !== undefined ? tReview.scores[c.key] : -1;
+        const buttonsHtml = [0, 1, 2, 3].map(score => `
+          <button class="btn-score ${currentScore === score ? 'selected' : ''}" onclick="setCriteriaScore('${t.id}', '${c.key}', ${score})">
+            ${score}
+          </button>
+        `).join('');
+
+        return `
+          <div class="criteria-item">
+            <div class="criteria-label">
+              <span>${c.label}</span>
+              <span style="color: var(--accent-cyan); font-weight: 900;">${currentScore >= 0 ? currentScore + '/3' : '-'}</span>
+            </div>
+            <div class="score-buttons">${buttonsHtml}</div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('review-notes').value = tReview.notes || '';
+
+      renderOverallSummary();
+      updateJsonPreview();
+    }
+
+    function setCriteriaScore(transId, key, score) {
+      if (!reviewsData[transId]) {
+        reviewsData[transId] = { scores: {}, notes: '' };
+      }
+      reviewsData[transId].scores[key] = score;
+      renderReviewScreen();
+    }
+
+    function saveReviewData() {
+      const t = TRANSITIONS[currentIndex];
+      if (!reviewsData[t.id]) {
+        reviewsData[t.id] = { scores: {}, notes: '' };
+      }
+      reviewsData[t.id].notes = document.getElementById('review-notes').value;
+
+      try {
+        localStorage.setItem('dj_prompter_reviews', JSON.stringify(reviewsData));
+      } catch (e) {}
+
+      alert(`Evaluation saved for ${t.id}!`);
+      renderReviewScreen();
+    }
+
+    /* ==========================================
+       FEATURE 5: EXPORT EXPORT JSON SPEC
+       ========================================== */
+    function buildExportPayload() {
+      const dateStr = new Date().toISOString().split('T')[0];
+      const resultsArray = [];
+
+      Object.keys(reviewsData).forEach(transId => {
+        const item = reviewsData[transId];
+        if (item) {
+          resultsArray.push({
+            transition: transId,
+            scores: item.scores || {},
+            notes: item.notes || ""
+          });
+        }
+      });
+
+      return {
+        date: dateStr,
+        results: resultsArray
+      };
+    }
+
+    function updateJsonPreview() {
+      const payload = buildExportPayload();
+      const previewEl = document.getElementById('json-export-preview');
+      if (previewEl) {
+        previewEl.textContent = JSON.stringify(payload, null, 2);
+      }
+    }
+
+    function copyJsonToClipboard() {
+      const payload = buildExportPayload();
+      const str = JSON.stringify(payload, null, 2);
+      navigator.clipboard.writeText(str).then(() => {
+        alert('Export JSON copied to clipboard!');
+      }).catch(() => {
+        alert('JSON:\n' + str);
+      });
+    }
+
+    function exportReviewJson() {
+      const payload = buildExportPayload();
+      const str = JSON.stringify(payload, null, 2);
+      const blob = new Blob([str], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dj_practice_review_${payload.date}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function renderOverallSummary() {
+      const summaryEl = document.getElementById('set-summary-content');
+      const evaluatedKeys = Object.keys(reviewsData);
+      if (evaluatedKeys.length === 0) {
+        summaryEl.innerHTML = `No evaluations saved yet. Score transitions after your practice runs to log metrics here.`;
+        return;
+      }
+
+      let totalScore = 0;
+      let maxPossible = 0;
+
+      evaluatedKeys.forEach(id => {
+        const item = reviewsData[id];
+        if (item && item.scores) {
+          Object.values(item.scores).forEach(val => {
+            if (val >= 0) {
+              totalScore += val;
+              maxPossible += 3;
+            }
+          });
+        }
+      });
+
+      const percentage = maxPossible > 0 ? ((totalScore / maxPossible) * 100).toFixed(1) : 0;
+      summaryEl.innerHTML = `
+        <div style="display: flex; gap: 16px; margin-bottom: 8px;">
+          <div>Evaluated Transitions: <strong>${evaluatedKeys.length}/${TRANSITIONS.length}</strong></div>
+          <div>Overall Score: <strong style="color: var(--accent-cyan);">${totalScore}/${maxPossible} (${percentage}%)</strong></div>
+        </div>
+      `;
+    }
+
+    /* ==========================================
+       FEATURE 1: BLUETOOTH FOOT SWITCH & KEYBOARD MAP
+       Next Page = next transition (PageDown / ArrowDown / ArrowRight / Space / Enter)
+       Prev Page = prev transition (PageUp / ArrowUp / ArrowLeft)
+       ========================================== */
+    window.addEventListener('keydown', (e) => {
+      // Avoid overriding text area input
+      if (document.activeElement && document.activeElement.tagName === 'TEXTAREA') return;
+
+      if (e.key === 'Escape') {
+        closeTimerOverlay();
+      } else if (
+        e.key === 'PageDown' || 
+        e.key === 'ArrowRight' || 
+        e.key === 'ArrowDown' || 
+        e.key === ' ' || 
+        e.key === 'Enter'
+      ) {
+        e.preventDefault();
+        nextTransition();
+      } else if (
+        e.key === 'PageUp' || 
+        e.key === 'ArrowLeft' || 
+        e.key === 'ArrowUp'
+      ) {
+        e.preventDefault();
+        prevTransition();
+      }
+    });
+
+    let touchStartX = null;
+    document.addEventListener('touchstart', (e) => {
+      if (document.getElementById('countdown-overlay').classList.contains('show')) return;
+      touchStartX = e.changedTouches[0].clientX;
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+      if (document.getElementById('countdown-overlay').classList.contains('show')) return;
+      if (touchStartX === null) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (dx < -50) nextTransition();
+      if (dx > 50) prevTransition();
+      touchStartX = null;
+    }, { passive: true });
+
+    /* ==========================================
+       HERCULES DJ CONTROLLER & HARDWARE INTEGRATION
+       Supports Hercules DJControl series, USB MIDI controllers & Bluetooth hardware
+       ========================================== */
+    let connectedBtDevice = null;
+    let detectedMidiDeviceName = "";
+
+    async function connectBluetoothPedal() {
+      if (!navigator.bluetooth) {
+        alert("Web Bluetooth API is not supported in this browser. Please use Chrome, Edge, or Opera.");
+        return;
+      }
+      try {
+        const device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: [
+            'battery_service',
+            '03b80e5a-ede8-4b33-a751-6ce34ec4c700' // BLE-MIDI Service
+          ]
+        });
+
+        if (device) {
+          connectedBtDevice = device;
+          const badge = document.getElementById('footswitch-badge');
+          if (badge) {
+            badge.innerHTML = `🎛️ ${device.name || 'BT CONTROLLER'} READY`;
+            badge.style.display = 'flex';
+          }
+
+          if (device.gatt) {
+            await device.gatt.connect().catch(() => {});
+            device.addEventListener('gattserverdisconnected', () => {
+              connectedBtDevice = null;
+              initFootswitchDetection();
+            });
+          }
+        }
+      } catch (err) {
+        if (err.name !== 'NotFoundError') {
+          console.error('Bluetooth error:', err);
+        }
+      }
+    }
+
+    function setupMIDIListeners(midiAccess) {
+      function bindInputs() {
+        if (!midiAccess || !midiAccess.inputs) return;
+        for (let input of midiAccess.inputs.values()) {
+          if (input.name) {
+            detectedMidiDeviceName = input.name;
+          }
+          input.onmidimessage = (event) => {
+            const [status, data1, data2] = event.data;
+            const msgType = status & 0xf0;
+
+            // Note On (0x90), Control Change (0xB0), or Program Change (0xC0)
+            if (msgType === 0x90 || msgType === 0xb0 || msgType === 0xc0) {
+              if (data2 === undefined || data2 > 0) {
+                // Browse Encoder (CC 0xB0) - Clockwise (next), Counter-clockwise (prev)
+                if (msgType === 0xb0) {
+                  if (data2 === 1 || (data2 > 0 && data2 < 64)) {
+                    nextTransition();
+                  } else if (data2 === 127 || data2 >= 64) {
+                    prevTransition();
+                  } else {
+                    nextTransition();
+                  }
+                } else {
+                  // Pads / Buttons (Note On 0x90 / Program Change 0xC0)
+                  // Pad 1 / Even Note -> Next, Pad 2 / Odd Note -> Prev
+                  if (data1 % 2 === 0) {
+                    nextTransition();
+                  } else {
+                    prevTransition();
+                  }
+                }
+              }
+            }
+          };
+        }
+      }
+
+      bindInputs();
+      midiAccess.onstatechange = () => {
+        bindInputs();
+        initFootswitchDetection();
+      };
+    }
+
+    function initFootswitchDetection() {
+      const badge = document.getElementById('footswitch-badge');
+      if (!badge) return;
+
+      let midiDetected = false;
+      let btDetected = false;
+
+      function updateBadgeState() {
+        if (connectedBtDevice) {
+          badge.innerHTML = `🎛️ ${connectedBtDevice.name || 'BT CONTROLLER'} READY`;
+          badge.style.display = 'flex';
+          return;
+        }
+        if (midiDetected) {
+          const devName = detectedMidiDeviceName ? detectedMidiDeviceName.toUpperCase() : 'HERCULES / MIDI CONTROLLER';
+          badge.innerHTML = `🎛️ ${devName} READY`;
+          badge.style.display = 'flex';
+        } else if (btDetected) {
+          badge.innerHTML = `🎛️ BLUETOOTH CONTROLLER READY`;
+          badge.style.display = 'flex';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+
+      // 1. Web MIDI API Detection (Hercules & USB MIDI DJ Controllers)
+      if (navigator.requestMIDIAccess) {
+        navigator.requestMIDIAccess({ sysex: false })
+          .then(midiAccess => {
+            setupMIDIListeners(midiAccess);
+            midiDetected = midiAccess && midiAccess.inputs && midiAccess.inputs.size > 0;
+            updateBadgeState();
+          })
+          .catch(() => {
+            midiDetected = false;
+            updateBadgeState();
+          });
+      }
+
+      // 2. Web Bluetooth LE Detection
+      if (navigator.bluetooth && typeof navigator.bluetooth.getDevices === 'function') {
+        navigator.bluetooth.getDevices()
+          .then(devices => {
+            btDetected = Array.isArray(devices) && devices.length > 0 && devices.some(d => !d.gatt || d.gatt.connected);
+            updateBadgeState();
+          })
+          .catch(() => {
+            btDetected = false;
+            updateBadgeState();
+          });
+      }
+    }
+
+    initFootswitchDetection();
+    renderRunnerCard();
+  </script>
+</body>
+</html>
